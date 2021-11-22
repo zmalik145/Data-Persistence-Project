@@ -10,22 +10,19 @@ public class MainManager : MonoBehaviour
     public int LineCount = 6;
     public Rigidbody Ball;
 
-    public Text textBestScore;
-    public Text textPlayerScore;
+    public Text ScoreText;
     public GameObject GameOverText;
     
     private bool m_Started = false;
     private int m_Points;
     
-    private bool isGameOver = false;
+    private bool m_GameOver = false;
 
     
     // Start is called before the first frame update
     void Start()
     {
-        SetBestScore();
-
-        GameManager.ShareInstance.player.score = 0;
+        
         const float step = 0.6f;
         int perLine = Mathf.FloorToInt(4.0f / step);
         
@@ -57,46 +54,39 @@ public class MainManager : MonoBehaviour
                 Ball.AddForce(forceDir * 2.0f, ForceMode.VelocityChange);
             }
         }
-        else if (isGameOver)
+        else if (m_GameOver)
         {
             if (Input.GetKeyDown(KeyCode.Space))
             {
-#if UNITY_EDITOR
-                if (GameManager.ShareInstance == null) return;
-#endif
-                GameManager.StartGame();
-            }
-            else if (Input.GetKeyDown(KeyCode.Q))
-            {
-#if UNITY_EDITOR
-                if (GameManager.ShareInstance == null) return;
-#endif
-                GameManager.OpenMenu();
+                SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex);
             }
         }
     }
 
     void AddPoint(int point)
     {
-        GameManager.ShareInstance.player.score += point;
-        textPlayerScore.text = $"Score : {GameManager.ShareInstance.player.score}";
+        m_Points += point;
+        ScoreText.text = $"Score : {m_Points}";
+
+        if(m_Points > GameController.Instance.bestScore)
+        {
+            setHighScorer(m_Points, GameController.Instance.playerName);
+        }
+        
+    }
+
+
+    public void setHighScorer(int highestScore, string highestScorer)
+    {
+        GameController.Instance.bestScore = highestScore;
+        GameController.Instance.highScorePlayer = highestScorer;
     }
 
     public void GameOver()
     {
-        if (GameManager.ShareInstance.UpdateHighscores())
-        {
-            GameManager.ShareInstance.SaveHighscores();
-            SetBestScore();
-        }
-
-        isGameOver = true;
+        m_GameOver = true;
         GameOverText.SetActive(true);
     }
 
-    private void SetBestScore()
-    {
-        var highscore = GameManager.ShareInstance.highscores[0];
-        textBestScore.text = "Best Highscore: " + highscore.name + " with " + highscore.score + " points.";
-    }
+    
 }
